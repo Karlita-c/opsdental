@@ -3,15 +3,30 @@ name: Keepalive Railway
 on:
   schedule:
     - cron: '*/5 * * * *'   # cada 5 minutos
-  workflow_dispatch:          # también se puede lanzar manualmente
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping backend Railway
+      - name: Ping backend
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            https://${{ secrets.RAILWAY_BACKEND_URL }}/api/health)
-          echo "Health check HTTP $STATUS"
-          [ "$STATUS" = "200" ] && echo "✅ Backend activo" || echo "⚠️ Backend no respondió"
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+              https://${{ secrets.RAILWAY_BACKEND_URL }}/api/health)
+            echo "Intento $i → HTTP $STATUS"
+            [ "$STATUS" = "200" ] && echo "✅ Backend activo" && exit 0
+            sleep 5
+          done
+          echo "⚠️ Backend no respondió tras 3 intentos"
+
+      - name: Ping frontend
+        run: |
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+              https://${{ secrets.RAILWAY_FRONTEND_URL }})
+            echo "Intento $i → HTTP $STATUS"
+            [ "$STATUS" = "200" ] && echo "✅ Frontend activo" && exit 0
+            sleep 5
+          done
+          echo "⚠️ Frontend no respondió tras 3 intentos"
