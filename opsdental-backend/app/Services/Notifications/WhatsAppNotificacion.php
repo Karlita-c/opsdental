@@ -15,8 +15,8 @@ class WhatsAppNotificacion implements NotificacionInterface
 
     public function __construct()
     {
-        $this->phoneNumberId = config('services.whatsapp.phone_number_id', '');
-        $this->token         = config('services.whatsapp.token', '');
+        $this->phoneNumberId = config('services.whatsapp.phone_number_id') ?? '';
+        $this->token         = config('services.whatsapp.token') ?? '';
         $this->apiUrl        = "https://graph.facebook.com/v19.0/{$this->phoneNumberId}/messages";
     }
 
