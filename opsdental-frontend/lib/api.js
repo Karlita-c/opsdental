@@ -49,7 +49,11 @@ async function request(method, endpoint, body = null, attempt = 0) {
     throw err;
   }
 
-  const data = res.status !== 204 ? await res.json() : null;
+  let data = null;
+  if (res.status !== 204) {
+    const text = await res.text();
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+  }
 
   if (!res.ok) {
     const err = new Error(data?.message || 'Error en la solicitud.');
