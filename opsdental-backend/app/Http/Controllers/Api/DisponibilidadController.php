@@ -9,7 +9,6 @@ use App\Repositories\TratamientoRepository;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class DisponibilidadController extends Controller
 {
@@ -34,11 +33,7 @@ class DisponibilidadController extends Controller
         $cId = (int) $request->consultorio_id;
         $tId = (int) $request->tratamiento_id;
 
-        $cacheKey = "disp:{$cId}:{$tId}:{$request->fecha}";
-
-        $slots = Cache::tags(["disp:{$cId}"])->remember($cacheKey, 300, function () use ($cId, $tId, $request) {
-            return $this->calcularSlots($cId, $tId, $request->fecha);
-        });
+        $slots = $this->calcularSlots($cId, $tId, $request->fecha);
 
         return response()->json(['slots' => $slots]);
     }

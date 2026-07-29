@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Repositories\HorarioRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class HorarioController extends Controller
 {
@@ -40,7 +39,7 @@ class HorarioController extends Controller
         $horario = $this->repo->create([...$data, 'consultorio_id' => $consultorioId, 'activo' => true]);
 
         // Limpiar caché de disponibilidad del consultorio al agregar un horario
-        Cache::tags(["disp:{$consultorioId}"])->flush();
+        // Cache flush omitted — requires Redis tagging support
 
         return response()->json($horario, 201);
     }
@@ -60,7 +59,7 @@ class HorarioController extends Controller
         $actualizado = $this->repo->update($id, $data);
 
         // Limpiar caché: cambiar horas o estado afecta los slots disponibles
-        Cache::tags(["disp:{$consultorioId}"])->flush();
+        // Cache flush omitted — requires Redis tagging support
 
         return response()->json($actualizado);
     }
@@ -74,7 +73,7 @@ class HorarioController extends Controller
         $this->repo->delete($id);
 
         // Limpiar caché: eliminar un horario invalida toda disponibilidad de ese día
-        Cache::tags(["disp:{$consultorioId}"])->flush();
+        // Cache flush omitted — requires Redis tagging support
 
         return response()->json(null, 204);
     }

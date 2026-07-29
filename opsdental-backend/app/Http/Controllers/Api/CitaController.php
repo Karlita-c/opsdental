@@ -10,7 +10,6 @@ use App\Repositories\CitaRepository;
 use App\Repositories\TratamientoRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CitaController extends Controller
@@ -274,6 +273,6 @@ class CitaController extends Controller
 
     private function limpiarCache(int $consultorioId, int $tratamientoId, string $fecha): void
     {
-        Cache::tags(["disp:{$consultorioId}"])->forget("disp:{$consultorioId}:{$tratamientoId}:{$fecha}");
+        // Cache invalidation omitted — requires Redis tagging support
     }
 }
