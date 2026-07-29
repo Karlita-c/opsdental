@@ -1,0 +1,116 @@
+services:
+
+  # ── Balanceo de cargas ─────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: opsdental_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d/local.conf:/etc/nginx/conf.d/default.conf:ro
+      - backend_public:/var/www/html/public:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    networks:
+      - opsdental_net
+
+  # ── Servidor de aplicaciones: Backend (Laravel PHP-FPM) ───────────────────
+  backend:
+    build:
+      context: ./opsdental-backend
+      dockerfile: Dockerfile
+    container_name: opsdental_backend
+    volumes:
+      - backend_public:/var/www/html/public
+    env_file:
+      - .env.docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - opsdental_net
+
+  # ── Servidor de aplicaciones: Frontend (Next.js) ──────────────────────────
+  frontend:
+    build:
+      context: ./opsdental-frontend
+      dockerfile: Dockerfile
+    container_name: opsdental_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - opsdental_net
+
+  # ── Servidor de base de datos (PostgreSQL 16) ─────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: opsdental_postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB:       opsdental_db
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Opsdental71421*}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d opsdental_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - opsdental_net
+
+  # ── Caché y colas (Redis 7) ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: opsdental_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+    networks:
+      - opsdental_net
+
+  # ── Automatización WhatsApp (N8N) ─────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n
+    container_name: opsdental_n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-OpsDental2026!}
+      - WEBHOOK_URL=http://localhost:5678
+    volumes:
+      - n8ndata:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - opsdental_net
+
+volumes:
+  pgdata:
+    name: opsdental_pgdata
+  redisdata:
+    name: opsdental_redisdata
+  n8ndata:
+    name: opsdental_n8ndata
+  backend_public:
+    name: opsdental_backend_public
+
+networks:
+  opsdental_net:
+    name: opsdental_network
+    driver: bridge

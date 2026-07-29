@@ -1,0 +1,39 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Notas y reportes locales
+*.txt
+zap_report*.html
+
+# Scripts locales de prueba
+test-produccion.mjs
+test-roles.mjs
+test-*.mjs
+check-*.mjs
+agregar-*.mjs
+capturas-produccion/
+capturas-*/
+.brevo-profile/
+
+.vercel
+
+# Archivos de entorno con credenciales reales
+.env.docker
+.env
+*.env
+
+# Claude Code — configuración local
+.claude/
+
+# Archivos temporales del proyecto
+C:UsersKARLAAppDataLocalTemptest-hamburger.mjs
+*hamburger*.mjs
+*test-hamburger*
