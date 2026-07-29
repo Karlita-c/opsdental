@@ -369,7 +369,7 @@ export default function DetalleConsultorioPage() {
         <h4 className="fw-bold mb-1">¡Cita confirmada!</h4>
         <p className="text-muted mb-1">{citaCreada.tratamiento?.nombre} en {consultorio.nombre}</p>
         <p className="text-muted mb-4 small">
-          <i className="bi bi-calendar3 me-1"/>{new Date(citaCreada.fecha + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+          <i className="bi bi-calendar3 me-1"/>{new Date((citaCreada.fecha ?? '').substring(0, 10) + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
           <span className="mx-2">·</span>
           <i className="bi bi-clock me-1"/>{citaCreada.hora_inicio} – {citaCreada.hora_fin}
         </p>
