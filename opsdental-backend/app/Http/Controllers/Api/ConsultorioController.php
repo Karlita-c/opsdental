@@ -79,15 +79,16 @@ class ConsultorioController extends Controller
             'logo' => 'required|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
-        // Eliminar logo anterior si existe
-        if ($consultorio->foto) {
-            $oldPath = str_replace(url('/storage') . '/', '', $consultorio->foto);
-            \Storage::disk('public')->delete($oldPath);
-        }
+        $result = cloudinary()->upload($request->file('logo')->getRealPath(), [
+            'folder'        => 'opsdental/logos',
+            'public_id'     => "consultorio_{$consultorio->id}",
+            'overwrite'     => true,
+            'resource_type' => 'image',
+        ]);
 
-        $path = $request->file('logo')->store("logos/{$consultorio->id}", 'public');
-        $consultorio->update(['foto' => \Storage::disk('public')->url($path)]);
+        $url = $result->getSecurePath();
+        $consultorio->update(['foto' => $url]);
 
-        return response()->json(['foto' => $consultorio->foto]);
+        return response()->json(['foto' => $url]);
     }
 }
