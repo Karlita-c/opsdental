@@ -5,7 +5,7 @@ import AppModal from '@/components/ui/AppModal';
 import AppAlert from '@/components/ui/AppAlert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
-const BLANK = { nombre: '', duracion_minutos: 30, precio: '', descripcion: '', activo: true };
+const BLANK = { nombre: '', precio: '', descripcion: '', activo: true };
 
 export default function TratamientosPage() {
   const [lista,   setLista]   = useState([]);
@@ -93,10 +93,6 @@ export default function TratamientosPage() {
         )}
 
         <div className="d-flex align-items-center gap-3 mb-4">
-          <span className="d-flex align-items-center gap-1 text-muted small">
-            <i className="bi bi-clock" />
-            {t.duracion_minutos} min
-          </span>
           <span className="fw-bold text-primary">
             ${parseFloat(t.precio).toFixed(2)}
           </span>
@@ -221,15 +217,9 @@ export default function TratamientosPage() {
             <input name="nombre" className="form-control" value={form.nombre} onChange={handle} required />
           </div>
 
-          <div className="row g-3 mb-3">
-            <div className="col-6">
-              <label className="form-label fw-medium">Duración (min) <span className="text-danger">*</span></label>
-              <input name="duracion_minutos" type="number" min="10" max="480" step="5" className="form-control" value={form.duracion_minutos} onChange={handle} required />
-            </div>
-            <div className="col-6">
-              <label className="form-label fw-medium">Precio ($) <span className="text-danger">*</span></label>
-              <input name="precio" type="number" step="0.01" min="0" className="form-control" value={form.precio} onChange={handle} required />
-            </div>
+          <div className="mb-3">
+            <label className="form-label fw-medium">Precio ($) <span className="text-danger">*</span></label>
+            <input name="precio" type="number" step="0.01" min="0" className="form-control" value={form.precio} onChange={handle} required />
           </div>
 
           <div className="mb-3">

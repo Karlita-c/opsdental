@@ -93,7 +93,7 @@ class DisponibilidadController extends Controller
         }
 
         $citasOcupadas = $this->citas->porConsultorioFecha($consultorioId, $fecha);
-        $duracion      = $tratamiento->duracion_minutos;
+        $duracion      = $tratamiento->duracion_minutos ?? 30;
         $inicio        = Carbon::parse("{$fecha} {$horario->hora_inicio}");
         $fin           = Carbon::parse("{$fecha} {$horario->hora_fin}");
         $slots         = [];

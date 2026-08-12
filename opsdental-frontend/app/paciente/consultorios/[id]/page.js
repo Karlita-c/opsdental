@@ -58,7 +58,6 @@ function PagoModal({ cita, onConfirmar, onCancelar, loading }) {
                 <div>
                   <div className="fw-semibold small">{cita.tratamiento}</div>
                   <div className="text-muted" style={{ fontSize:'.78rem' }}>{cita.fecha} · {cita.hora_inicio} – {cita.hora_fin}</div>
-                  <div className="text-muted" style={{ fontSize:'.78rem' }}><i className="bi bi-clock me-1" />Duración estimada: {cita.duracion} min</div>
                 </div>
                 <div className="fw-bold fs-5 text-primary">${parseFloat(cita.precio).toFixed(2)}</div>
               </div>
@@ -397,7 +396,7 @@ export default function DetalleConsultorioPage() {
     <>
       {showPago && slot && (
         <PagoModal
-          cita={{ tratamiento:tratamiento.nombre, duracion:tratamiento.duracion_minutos, fecha, hora_inicio:slot.hora_inicio, hora_fin:slot.hora_fin, precio:tratamiento.precio }}
+          cita={{ tratamiento:tratamiento.nombre, fecha, hora_inicio:slot.hora_inicio, hora_fin:slot.hora_fin, precio:tratamiento.precio }}
           onConfirmar={confirmarCita} onCancelar={() => setShowPago(false)} loading={loadingCita}
         />
       )}
@@ -498,7 +497,6 @@ export default function DetalleConsultorioPage() {
                         style={{ background: sel ? 'rgba(var(--bb-p-rgb),.07)' : 'transparent', cursor:'pointer', transition:'all .15s' }}>
                         <div>
                           <div className="fw-semibold small">{t.nombre}</div>
-                          <div className="text-muted" style={{ fontSize:'.78rem' }}><i className="bi bi-clock me-1"/>{t.duracion_minutos} min</div>
                         </div>
                         <div className="d-flex align-items-center gap-2">
                           <span className="fw-bold text-primary">${parseFloat(t.precio).toFixed(2)}</span>
@@ -580,8 +578,8 @@ export default function DetalleConsultorioPage() {
                 <li className="d-flex justify-content-between align-items-start py-2 border-bottom">
                   <span className="text-muted small">Duración</span>
                   <div className="text-end">
-                    <span className="fw-semibold small">{tratamiento ? `${tratamiento.duracion_minutos} min` : '—'}</span>
-                    {tratamiento && <span className="d-block text-muted" style={{ fontSize:'.68rem' }}>estimada</span>}
+                    <span className="fw-semibold small">{tratamiento ? 'Variable' : '—'}</span>
+                    {tratamiento && <span className="d-block text-muted" style={{ fontSize:'.68rem' }}>según caso clínico</span>}
                   </div>
                 </li>
                 <li className="d-flex justify-content-between py-2">
@@ -594,7 +592,7 @@ export default function DetalleConsultorioPage() {
                 <div className="mt-3 d-flex align-items-start gap-2 p-2 rounded-2"
                   style={{ background:'rgba(217,119,6,.07)', border:'1px solid rgba(217,119,6,.2)', fontSize:'.73rem' }}>
                   <i className="bi bi-info-circle-fill flex-shrink-0 mt-1" style={{ color:'#d97706' }}/>
-                  <span className="text-muted">La duración es <strong className="text-body">estimada</strong>. El tiempo real puede variar según tu caso. El consultorio te confirmará los detalles al llegar.</span>
+                  <span className="text-muted">La duración varía según tu caso clínico. El consultorio te confirmará los detalles al llegar.</span>
                 </div>
               )}
 

@@ -85,7 +85,7 @@ class CitaController extends Controller
         }
 
         $horaFin    = \Carbon\Carbon::parse($data['hora_inicio'])
-                        ->addMinutes($tratamiento->duracion_minutos)
+                        ->addMinutes($tratamiento->duracion_minutos ?? 30)
                         ->format('H:i');
         $paciente   = $request->user()->paciente;
         $pacienteId = $paciente->id;
@@ -244,7 +244,7 @@ class CitaController extends Controller
 
         $tratamiento = $this->tratamientos->find($cita->tratamiento_id);
         $horaFin     = \Carbon\Carbon::parse($data['hora_inicio'])
-                        ->addMinutes($tratamiento->duracion_minutos)
+                        ->addMinutes($tratamiento->duracion_minutos ?? 30)
                         ->format('H:i');
 
         $fechaAnterior = $cita->fecha->toDateString();
