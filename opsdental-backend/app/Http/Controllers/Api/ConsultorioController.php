@@ -79,14 +79,14 @@ class ConsultorioController extends Controller
             'logo' => 'required|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
-        $result = cloudinary()->upload($request->file('logo')->getRealPath(), [
+        $result = cloudinary()->uploadApi()->upload($request->file('logo')->getRealPath(), [
             'folder'        => 'opsdental/logos',
             'public_id'     => "consultorio_{$consultorio->id}",
             'overwrite'     => true,
             'resource_type' => 'image',
         ]);
 
-        $url = $result->getSecurePath();
+        $url = $result['secure_url'];
         $consultorio->update(['foto' => $url]);
 
         return response()->json(['foto' => $url]);
