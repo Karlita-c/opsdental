@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\CitaCancelada;
 use App\Events\NuevaCitaRegistrada;
 use App\Http\Controllers\Controller;
 use App\Models\Consultorio;
@@ -145,7 +144,6 @@ class CitaController extends Controller
 
         $cita->cancelar();
         $this->limpiarCache($cita->consultorio_id, $cita->tratamiento_id, $cita->fecha->toDateString());
-        event(new CitaCancelada($cita));
 
         return response()->json(['message' => 'Cita cancelada correctamente.']);
     }
@@ -163,7 +161,6 @@ class CitaController extends Controller
 
         $cita->cancelar();
         $this->limpiarCache($cita->consultorio_id, $cita->tratamiento_id, $cita->fecha->toDateString());
-        event(new CitaCancelada($cita));
 
         return response()->json(['message' => 'Cita cancelada.']);
     }

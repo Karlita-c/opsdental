@@ -3,6 +3,7 @@
 namespace App\Services\Notifications;
 
 use App\Models\Cita;
+use App\Models\User;
 use App\Services\Notifications\Contracts\NotificacionInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -59,14 +60,14 @@ class WhatsAppNotificacion implements NotificacionInterface
         );
     }
 
-    private function enviar(string $telefono, string $mensaje): void
+    public function enviar(string $telefono, string $mensaje): void
     {
         if (!$this->token || !$this->phoneNumberId) {
             Log::warning("WhatsApp no configurado — mensaje no enviado", ['telefono' => $telefono]);
             return;
         }
 
-        $telefono = preg_replace('/[^0-9]/', '', $telefono);
+        $telefono = User::normalizarTelefono($telefono);
         if (strlen($telefono) < 10) {
             Log::warning("WhatsApp: teléfono inválido", ['telefono' => $telefono]);
             return;

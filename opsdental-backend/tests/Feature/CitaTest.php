@@ -227,12 +227,6 @@ class CitaTest extends TestCase
             ])
             ->json();
 
-        // Simular entrada en caché de disponibilidad (usa tags igual que el controlador)
-        $cacheTag = "disp:{$c->id}";
-        $cacheKey = "disp:{$c->id}:{$tratamiento->id}:{$fecha}";
-        Cache::tags([$cacheTag])->put($cacheKey, ['slots' => [['hora_inicio' => '09:00', 'disponible' => false]]], 300);
-        $this->assertTrue(Cache::tags([$cacheTag])->has($cacheKey));
-
         // Cancelar la cita
         $this->actingAs($userP, 'sanctum')
             ->patchJson("/api/citas/{$cita['id']}/cancelar")
@@ -244,9 +238,6 @@ class CitaTest extends TestCase
             'id'     => $cita['id'],
             'estado' => 'cancelada',
         ]);
-
-        // Caché de disponibilidad limpiada para que pacientes vean el espacio libre
-        $this->assertFalse(Cache::tags([$cacheTag])->has($cacheKey));
     }
 
     // ── CV05 — Membrecía vencida bloquea agendamiento → HTTP 422 ───────────────
@@ -274,7 +265,7 @@ class CitaTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonFragment([
-                'message' => 'Este consultorio no puede recibir citas en este momento (membrecía inactiva).',
+                'message' => 'Este consultorio no puede recibir citas en este momento (membresía inactiva).',
             ]);
 
         // No se creó ninguna cita

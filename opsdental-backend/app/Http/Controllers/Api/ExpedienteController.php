@@ -32,7 +32,7 @@ class ExpedienteController extends Controller
         $data['consultorio_id'] = $request->user()->consultorio->id;
         $data['paciente_id']    = $pacienteId;
 
-        $expediente = $this->repo->crear($data);
+        $expediente = $this->repo->create($data);
         return response()->json($expediente, 201);
     }
 

@@ -5,8 +5,13 @@ namespace App\Repositories;
 use App\Models\ListaEspera;
 use Illuminate\Database\Eloquent\Collection;
 
-class ListaEsperaRepository
+class ListaEsperaRepository extends BaseRepository
 {
+    public function __construct()
+    {
+        parent::__construct(new ListaEspera());
+    }
+
     public function siguienteEnCola(int $consultorioId, ?int $tratamientoId = null): ?ListaEspera
     {
         return ListaEspera::with('paciente.user', 'tratamiento')
@@ -53,10 +58,5 @@ class ListaEsperaRepository
         return (ListaEspera::where('consultorio_id', $consultorioId)
             ->whereIn('estado', ['en_espera', 'notificado'])
             ->max('posicion') ?? 0) + 1;
-    }
-
-    public function create(array $data): ListaEspera
-    {
-        return ListaEspera::create($data);
     }
 }

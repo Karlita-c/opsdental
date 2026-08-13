@@ -30,6 +30,16 @@ class User extends Authenticatable
         return $this->role === $role;
     }
 
+    public static function normalizarTelefono(string $tel): string
+    {
+        return preg_replace('/[^0-9]/', '', $tel);
+    }
+
+    public static function telefonoMx(string $tel): string
+    {
+        return '52' . static::normalizarTelefono($tel);
+    }
+
     public function consultorio()
     {
         return $this->hasOne(Consultorio::class);

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "429c7a9d9a85aa5823fe2a8ec7baca61",
+    "content-hash": "d9526eb54f13395d1f6a785de0b7f359",
     "packages": [
         {
             "name": "brick/math",
@@ -137,16 +137,16 @@
         },
         {
             "name": "cloudinary-labs/cloudinary-laravel",
-            "version": "3.0.2",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cloudinary-community/cloudinary-laravel.git",
-                "reference": "575f4508f9fb50ee9b915e7b53868f5bc9ccf2bb"
+                "reference": "a803d0c115baba68851a667305f0834cafa7e35a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cloudinary-community/cloudinary-laravel/zipball/575f4508f9fb50ee9b915e7b53868f5bc9ccf2bb",
-                "reference": "575f4508f9fb50ee9b915e7b53868f5bc9ccf2bb",
+                "url": "https://api.github.com/repos/cloudinary-community/cloudinary-laravel/zipball/a803d0c115baba68851a667305f0834cafa7e35a",
+                "reference": "a803d0c115baba68851a667305f0834cafa7e35a",
                 "shasum": ""
             },
             "require": {
@@ -201,9 +201,9 @@
             ],
             "support": {
                 "issues": "https://github.com/cloudinary-community/cloudinary-laravel/issues",
-                "source": "https://github.com/cloudinary-community/cloudinary-laravel/tree/3.0.2"
+                "source": "https://github.com/cloudinary-community/cloudinary-laravel/tree/3.0.0"
             },
-            "time": "2025-10-13T05:21:21+00:00"
+            "time": "2025-03-16T19:19:14+00:00"
         },
         {
             "name": "cloudinary/cloudinary_php",

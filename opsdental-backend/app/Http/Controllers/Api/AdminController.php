@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\MembreciaController;
 use App\Models\Consultorio;
 use App\Models\Membrecia;
 use Illuminate\Http\JsonResponse;
@@ -57,14 +58,12 @@ class AdminController extends Controller
             'fecha_vencimiento' => 'required|date|after:fecha_inicio',
         ]);
 
-        $limites = [
-            'gratuito' => 10,
-            'basico'   => 20,
-            'premium'  => 50,
-            'pro'      => 999,
-        ];
+        $planes = array_merge(
+            ['gratuito' => ['limite_citas_mes' => 10]],
+            array_map(fn($p) => ['limite_citas_mes' => $p['limite_citas_mes']], MembreciaController::PLANES)
+        );
 
-        $data['limite_citas_mes'] = $limites[$data['plan']];
+        $data['limite_citas_mes'] = $planes[$data['plan']]['limite_citas_mes'];
 
         $consultorio = Consultorio::findOrFail($id);
 
@@ -81,7 +80,7 @@ class AdminController extends Controller
 
     private function notificarActivacion(string $telefono, string $nombre, string $token): void
     {
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
         $enlace      = "{$frontendUrl}/acceso/{$token}";
 
         Log::info('WhatsApp activación consultorio → ' . $telefono, [
