@@ -1,0 +1,59 @@
+{
+  "name": "OpsDental — Felicitación de cumpleaños",
+  "nodes": [
+    {
+      "id": "cron-cumple",
+      "name": "Cron diario 10AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 24, "triggerAtHour": 10 }] }
+      },
+      "position": [250, 300]
+    },
+    {
+      "id": "get-cumpleanos",
+      "name": "Obtener cumpleaños de hoy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/cumpleanos-hoy"
+      },
+      "position": [450, 300]
+    },
+    {
+      "id": "loop-cumple",
+      "name": "Por cada paciente",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "parameters": { "batchSize": 1 },
+      "position": [650, 300]
+    },
+    {
+      "id": "wa-cumpleanos",
+      "name": "WA: Feliz cumpleaños",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $json.telefono }}",
+          "type": "text",
+          "text": {
+            "body": "=🎂 ¡Feliz cumpleaños, {{ $json.nombre }}! 🎉\n\nTodo el equipo de OpsDental te desea un día increíble lleno de sonrisas. ✨\n\nComo regalo especial, tienes un *10% de descuento* en tu próxima limpieza dental este mes. 🦷\n\nEscribe *CITA* para agendar y hacer válido tu descuento. ¡Celebra con una sonrisa!"
+          }
+        }
+      },
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Cron diario 10AM":         { "main": [[{ "node": "Obtener cumpleaños de hoy", "type": "main", "index": 0 }]] },
+    "Obtener cumpleaños de hoy":{ "main": [[{ "node": "Por cada paciente",         "type": "main", "index": 0 }]] },
+    "Por cada paciente":        { "main": [[{ "node": "WA: Feliz cumpleaños",      "type": "main", "index": 0 }]] }
+  }
+}

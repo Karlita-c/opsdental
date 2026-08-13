@@ -1,0 +1,40 @@
+{
+  "name": "OpsDental — Bienvenida a paciente nuevo",
+  "nodes": [
+    {
+      "id": "webhook-bienvenida",
+      "name": "Webhook Bienvenida",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "parameters": {
+        "path": "whatsapp-bienvenida",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "position": [240, 300]
+    },
+    {
+      "id": "wa-bienvenida",
+      "name": "WA: Mensaje de bienvenida",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $json.telefono }}",
+          "type": "text",
+          "text": {
+            "body": "=👋 ¡Hola {{ $json.nombre }}, bienvenido/a a OpsDental! 🦷\n\nTu consultorio te ha registrado en nuestro sistema de citas. Desde aquí puedes gestionar todo por WhatsApp:\n\n📅 *CITA* — Solicitar una cita\n✅ *SÍ* — Confirmar tu próxima cita\n❌ *CANCELAR* — Cancelar una cita\n📋 *EXPEDIENTE* — Ver tu historial de citas\n⭐ *1 al 5* — Calificar tu última visita\n\nEscribe *MENU* en cualquier momento para ver estas opciones.\n\n¡Te esperamos pronto! 😊"
+          }
+        }
+      },
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Bienvenida": { "main": [[{ "node": "WA: Mensaje de bienvenida", "type": "main", "index": 0 }]] }
+  }
+}

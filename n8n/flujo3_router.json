@@ -1,0 +1,286 @@
+{
+  "name": "OpsDental — Router WhatsApp CRM",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Webhook Meta WA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "parameters": {
+        "path": "whatsapp-router",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "position": [240, 400]
+    },
+    {
+      "id": "extract",
+      "name": "Extraer e identificar intención",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "parameters": {
+        "jsCode": "const entry = items[0].json;\nconst messages = entry?.entry?.[0]?.changes?.[0]?.value?.messages;\n\nif (!messages || !messages.length) return [];\n\nconst msg = messages[0];\nif (msg.type !== 'text') return [];\n\nconst telefono = msg.from ?? '';\nconst raw = msg.text?.body ?? '';\nconst texto = raw.toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\n\nlet intent = 'MENU';\nif (texto === 'SI' || texto === 'S')                         intent = 'CONFIRMAR';\nelse if (texto === 'CANCELAR' || texto === 'CANCEL')         intent = 'CANCELAR';\nelse if (texto === 'CITA' || texto.startsWith('CITA ') || texto === 'AGENDAR') intent = 'CITA';\nelse if (texto === 'EXPEDIENTE' || texto === 'HISTORIAL' || texto === 'MIS CITAS') intent = 'EXPEDIENTE';\nelse if (/^[1-5]$/.test(texto))                             intent = 'CALIFICAR';\nelse if (texto === 'HOLA' || texto === 'MENU' || texto === 'AYUDA' || texto === '?' || texto === 'INICIO' || texto === 'HI' || texto === 'START') intent = 'MENU';\n\nreturn [{ json: { telefono, texto, intent, calificacion: /^[1-5]$/.test(texto) ? texto : null } }];"
+      },
+      "position": [460, 400]
+    },
+    {
+      "id": "if-confirmar",
+      "name": "¿Es CONFIRMAR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.intent }}", "operation": "equal", "value2": "CONFIRMAR" }]
+        }
+      },
+      "position": [680, 400]
+    },
+    {
+      "id": "api-confirmar",
+      "name": "Confirmar cita en BD",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/confirmar-por-whatsapp",
+        "body": { "telefono": "={{ $('Extraer e identificar intención').item.json.telefono }}" }
+      },
+      "position": [900, 200]
+    },
+    {
+      "id": "wa-confirmada",
+      "name": "WA: ✅ Cita confirmada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "type": "text",
+          "text": { "body": "✅ ¡Tu cita quedó confirmada! Te esperamos. 🦷\n\nEscribe *MENU* si necesitas algo más." }
+        }
+      },
+      "position": [1120, 200]
+    },
+    {
+      "id": "if-cancelar",
+      "name": "¿Es CANCELAR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.intent }}", "operation": "equal", "value2": "CANCELAR" }]
+        }
+      },
+      "position": [680, 460]
+    },
+    {
+      "id": "api-cancelar",
+      "name": "Cancelar cita en BD",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/cancelar-por-whatsapp",
+        "body": { "telefono": "={{ $('Extraer e identificar intención').item.json.telefono }}" }
+      },
+      "position": [900, 380]
+    },
+    {
+      "id": "wa-cancelada",
+      "name": "WA: ❌ Cita cancelada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "type": "text",
+          "text": { "body": "❌ Cita cancelada. Puedes agendar una nueva escribiendo *CITA*.\n\nEscribe *MENU* para ver todas las opciones." }
+        }
+      },
+      "position": [1120, 380]
+    },
+    {
+      "id": "if-expediente",
+      "name": "¿Es EXPEDIENTE?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.intent }}", "operation": "equal", "value2": "EXPEDIENTE" }]
+        }
+      },
+      "position": [680, 520]
+    },
+    {
+      "id": "api-expediente",
+      "name": "Obtener historial",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/expediente-wa",
+        "queryParameters": {
+          "parameters": [{ "name": "telefono", "value": "={{ $('Extraer e identificar intención').item.json.telefono }}" }]
+        }
+      },
+      "position": [900, 560]
+    },
+    {
+      "id": "wa-expediente",
+      "name": "WA: Enviar historial",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "type": "text",
+          "text": { "body": "={{ $json.mensaje }}" }
+        }
+      },
+      "position": [1120, 560]
+    },
+    {
+      "id": "if-cita",
+      "name": "¿Es CITA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.intent }}", "operation": "equal", "value2": "CITA" }]
+        }
+      },
+      "position": [680, 580]
+    },
+    {
+      "id": "wa-cita",
+      "name": "WA: Instrucciones CITA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "type": "text",
+          "text": { "body": "📅 *Agendar cita*\n\nEscríbenos con este formato:\n_CITA DD/MM TRATAMIENTO_\n\nEjemplo:\n_CITA 15/08 Limpieza dental_\n\nUn miembro de tu consultorio te confirmará el horario disponible. 😊\n\nEscribe *MENU* para ver todas las opciones." }
+        }
+      },
+      "position": [900, 700]
+    },
+    {
+      "id": "if-calificar",
+      "name": "¿Es CALIFICAR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.intent }}", "operation": "equal", "value2": "CALIFICAR" }]
+        }
+      },
+      "position": [680, 640]
+    },
+    {
+      "id": "api-calificar",
+      "name": "Guardar calificación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/calificar-wa",
+        "body": {
+          "telefono": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "calificacion": "={{ $('Extraer e identificar intención').item.json.calificacion }}"
+        }
+      },
+      "position": [900, 820]
+    },
+    {
+      "id": "wa-calificacion",
+      "name": "WA: Gracias calificación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "type": "text",
+          "text": { "body": "={{ $json.mensaje }}" }
+        }
+      },
+      "position": [1120, 820]
+    },
+    {
+      "id": "wa-menu",
+      "name": "WA: Menú",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $('Extraer e identificar intención').item.json.telefono }}",
+          "type": "text",
+          "text": { "body": "👋 *Bienvenido a OpsDental* 🦷\n\nEscribe una opción:\n\n📅 *CITA* — Agendar una cita\n✅ *SÍ* — Confirmar tu próxima cita\n❌ *CANCELAR* — Cancelar tu próxima cita\n📋 *EXPEDIENTE* — Ver tus últimas citas\n⭐ *1 al 5* — Calificar tu última visita\n\nEscribe *MENU* en cualquier momento para ver este menú." }
+        }
+      },
+      "position": [900, 980]
+    }
+  ],
+  "connections": {
+    "Webhook Meta WA":                  { "main": [[{ "node": "Extraer e identificar intención", "type": "main", "index": 0 }]] },
+    "Extraer e identificar intención":  { "main": [[{ "node": "¿Es CONFIRMAR?",    "type": "main", "index": 0 }]] },
+    "¿Es CONFIRMAR?": {
+      "main": [
+        [{ "node": "Confirmar cita en BD",  "type": "main", "index": 0 }],
+        [{ "node": "¿Es CANCELAR?",         "type": "main", "index": 0 }]
+      ]
+    },
+    "Confirmar cita en BD":    { "main": [[{ "node": "WA: ✅ Cita confirmada",  "type": "main", "index": 0 }]] },
+    "¿Es CANCELAR?": {
+      "main": [
+        [{ "node": "Cancelar cita en BD",   "type": "main", "index": 0 }],
+        [{ "node": "¿Es EXPEDIENTE?",       "type": "main", "index": 0 }]
+      ]
+    },
+    "Cancelar cita en BD":     { "main": [[{ "node": "WA: ❌ Cita cancelada",   "type": "main", "index": 0 }]] },
+    "¿Es EXPEDIENTE?": {
+      "main": [
+        [{ "node": "Obtener historial",     "type": "main", "index": 0 }],
+        [{ "node": "¿Es CITA?",             "type": "main", "index": 0 }]
+      ]
+    },
+    "Obtener historial":       { "main": [[{ "node": "WA: Enviar historial",     "type": "main", "index": 0 }]] },
+    "¿Es CITA?": {
+      "main": [
+        [{ "node": "WA: Instrucciones CITA","type": "main", "index": 0 }],
+        [{ "node": "¿Es CALIFICAR?",        "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Es CALIFICAR?": {
+      "main": [
+        [{ "node": "Guardar calificación",  "type": "main", "index": 0 }],
+        [{ "node": "WA: Menú",              "type": "main", "index": 0 }]
+      ]
+    },
+    "Guardar calificación":    { "main": [[{ "node": "WA: Gracias calificación", "type": "main", "index": 0 }]] }
+  }
+}

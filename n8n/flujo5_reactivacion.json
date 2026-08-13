@@ -1,0 +1,70 @@
+{
+  "name": "OpsDental — Reactivación: pacientes inactivos",
+  "nodes": [
+    {
+      "id": "cron-reactivacion",
+      "name": "Cron lunes 10AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "parameters": {
+        "rule": {
+          "interval": [{
+            "field": "weeks",
+            "weeksInterval": 1,
+            "triggerAtDay": [1],
+            "triggerAtHour": 10,
+            "triggerAtMinute": 0
+          }]
+        }
+      },
+      "position": [250, 300]
+    },
+    {
+      "id": "get-inactivos",
+      "name": "Obtener pacientes inactivos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/pacientes-sin-cita",
+        "queryParameters": {
+          "parameters": [{ "name": "dias", "value": "60" }]
+        }
+      },
+      "position": [450, 300]
+    },
+    {
+      "id": "loop-inactivos",
+      "name": "Por cada paciente",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "parameters": { "batchSize": 1 },
+      "position": [650, 300]
+    },
+    {
+      "id": "wa-reactivacion",
+      "name": "WA: Te extrañamos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
+        "body": {
+          "messaging_product": "whatsapp",
+          "to": "={{ $json.telefono }}",
+          "type": "text",
+          "text": {
+            "body": "=👋 Hola {{ $json.nombre }}, ¡te extrañamos en OpsDental! 🦷\n\nHace más de 2 meses que no agendas una cita. Una revisión a tiempo puede prevenir problemas mayores. 😊\n\nEscribe *CITA* para agendar tu próxima visita o *MENU* para ver opciones.\n\n¡Te esperamos!"
+          }
+        }
+      },
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Cron lunes 10AM":            { "main": [[{ "node": "Obtener pacientes inactivos", "type": "main", "index": 0 }]] },
+    "Obtener pacientes inactivos":{ "main": [[{ "node": "Por cada paciente",           "type": "main", "index": 0 }]] },
+    "Por cada paciente":          { "main": [[{ "node": "WA: Te extrañamos",           "type": "main", "index": 0 }]] }
+  }
+}

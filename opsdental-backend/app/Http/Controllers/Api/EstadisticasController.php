@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class EstadisticasController extends Controller
@@ -100,6 +101,18 @@ class EstadisticasController extends Controller
         });
 
         $link = (config('app.frontend_url') ?: 'http://localhost:3000') . '/acceso/' . $token;
+
+        if ($user->telefono) {
+            $telefono = '52' . preg_replace('/[^0-9]/', '', $user->telefono);
+            try {
+                Http::timeout(5)->post(
+                    env('N8N_INTERNAL_URL', 'http://n8n:5678') . '/webhook/whatsapp-bienvenida',
+                    ['nombre' => $user->name, 'telefono' => $telefono]
+                );
+            } catch (\Throwable) {
+                // N8N no disponible — no bloquear el registro
+            }
+        }
 
         return response()->json([
             'mensaje'     => 'Paciente registrado. Comparte el enlace para que acceda a la plataforma.',

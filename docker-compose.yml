@@ -94,6 +94,10 @@ services:
       - N8N_BASIC_AUTH_USER=admin
       - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-OpsDental2026!}
       - WEBHOOK_URL=http://localhost:5678
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
+      - WHATSAPP_PHONE_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - OPSDENTAL_API_URL=https://opsdental-production.up.railway.app
+      - OPSDENTAL_N8N_TOKEN=opsdental_n8n_2026
     volumes:
       - n8ndata:/home/node/.n8n
     restart: unless-stopped

@@ -29,6 +29,20 @@ export default function MisCitasPage() {
   const [calForm,    setCalForm]    = useState({});   // { [citaId]: { calificacion, comentario } }
   const [calSaving,  setCalSaving]  = useState(null);
 
+  // Pagar depósito
+  const [pagandoDeposito, setPagandoDeposito] = useState(null);
+
+  const pagarDeposito = async (id) => {
+    setPagandoDeposito(id);
+    try {
+      const { data } = await api.post(`/citas/${id}/deposito`);
+      window.location.href = data.init_point;
+    } catch (e) {
+      setMsg({ text: e.message || 'No se pudo iniciar el pago.', type: 'danger' });
+      setPagandoDeposito(null);
+    }
+  };
+
   // Reagendar
   const [reaId,      setReaId]      = useState(null);
   const [reaFecha,   setReaFecha]   = useState('');
@@ -251,6 +265,18 @@ export default function MisCitasPage() {
                       <div className="d-flex align-items-center gap-2 flex-shrink-0 flex-wrap justify-content-end">
                         <AppBadge text={c.estado} />
                         {['pendiente', 'confirmada'].includes(c.estado) && (<>
+                          {c.deposito_monto > 0 && c.deposito_estado === 'pendiente' && (
+                            <button
+                              className="btn btn-success btn-sm d-flex align-items-center gap-1"
+                              onClick={() => pagarDeposito(c.id)}
+                              disabled={pagandoDeposito === c.id}
+                            >
+                              {pagandoDeposito === c.id
+                                ? <span className="spinner-border spinner-border-sm" />
+                                : <i className="bi bi-credit-card-fill" />}
+                              Pagar depósito
+                            </button>
+                          )}
                           <button className="btn btn-outline-secondary btn-sm" onClick={() => abrirReagendar(c.id)}>
                             <i className="bi bi-calendar-event me-1" />Reagendar
                           </button>

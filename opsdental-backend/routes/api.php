@@ -22,9 +22,17 @@ Route::get('/health', fn() => response()->json(['status' => 'ok']));
 
 // N8N — endpoints internos para automatización WhatsApp
 Route::middleware('throttle:60,1')->prefix('n8n')->group(function () {
+    // Outbound — flujos de N8N que leen datos
     Route::get('/citas-manana',            [N8NController::class, 'citasManana']);
+    Route::get('/pacientes-sin-cita',      [N8NController::class, 'pacientesSinCita']);
+    Route::get('/cumpleanos-hoy',          [N8NController::class, 'cumpleanosHoy']);
+    Route::get('/citas-terminadas',        [N8NController::class, 'citasTerminadas']);
+
+    // Inbound — router WhatsApp llama estos endpoints
     Route::post('/confirmar-por-whatsapp', [N8NController::class, 'confirmarPorWhatsapp']);
     Route::post('/cancelar-por-whatsapp',  [N8NController::class, 'cancelarPorWhatsapp']);
+    Route::get('/expediente-wa',           [N8NController::class, 'expedienteWa']);
+    Route::post('/calificar-wa',           [N8NController::class, 'calificarWa']);
 });
 
 // Webhook Meta WhatsApp — verificación GET + mensajes entrantes POST

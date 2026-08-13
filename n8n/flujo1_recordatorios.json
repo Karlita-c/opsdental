@@ -5,6 +5,7 @@
       "id": "trigger-cron",
       "name": "Cron 9AM",
       "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
       "parameters": {
         "rule": { "interval": [{ "field": "hours", "hoursInterval": 24, "triggerAtHour": 9 }] }
       },
@@ -14,10 +15,10 @@
       "id": "get-citas",
       "name": "Obtener citas de mañana",
       "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
       "parameters": {
         "method": "GET",
-        "url": "http://localhost:8000/api/n8n/citas-manana",
-        "headers": { "Authorization": "Bearer opsdental_n8n_2026" }
+        "url": "={{ $env.OPSDENTAL_API_URL }}/api/n8n/citas-manana"
       },
       "position": [450, 300]
     },
@@ -25,6 +26,7 @@
       "id": "loop-citas",
       "name": "Por cada cita",
       "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
       "parameters": { "batchSize": 1 },
       "position": [650, 300]
     },
@@ -32,23 +34,26 @@
       "id": "send-wa",
       "name": "Enviar recordatorio WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
       "parameters": {
         "method": "POST",
-        "url": "https://graph.facebook.com/v19.0/1238253316039413/messages",
-        "headers": { "Authorization": "Bearer EAA9FgBwdXPwBSN6eeqdDj5V9d3nzFYSjpPFPoZBOUKoufoh6oeI5Gqtsk2qXxzJDYeKAhjqKwKsyD4XvaWVkQFHRj6Jm1GJclv4PjYOPhICdoPTeUaT4fHl9yAXqZBWWTlFkTENkxzlFiQiXEb2xaai4oi2uId10d4ZChOf9U2jAagc8mZA6kojirFCYM1ZCknpDCAYAIh0uwZBqLzgv18fQuGvLGFAeSTZAS5pypbkZAHk4uu81gbg8cNjzELHMeCab3Q8AYxvPZCajWN9fT0gLkU4LqQgZDZD" },
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "headers": { "Authorization": "=Bearer {{ $env.WHATSAPP_TOKEN }}" },
         "body": {
           "messaging_product": "whatsapp",
           "to": "={{ $json.telefono }}",
           "type": "text",
-          "text": { "body": "=👋 Hola {{ $json.nombre }}, te recordamos tu cita mañana {{ $json.fecha }} a las {{ $json.hora }} en {{ $json.consultorio }}. Responde SÍ para confirmar o CANCELAR si no puedes." }
+          "text": {
+            "body": "=👋 Hola {{ $json.nombre }}, te recordamos tu cita *mañana {{ $json.fecha }} a las {{ $json.hora }}* en *{{ $json.consultorio }}*.\n\nTratamiento: {{ $json.tratamiento }}\n\nResponde *SÍ* para confirmar o *CANCELAR* si no puedes asistir."
+          }
         }
       },
       "position": [850, 300]
     }
   ],
   "connections": {
-    "Cron 9AM": { "main": [[{ "node": "Obtener citas de mañana", "type": "main", "index": 0 }]] },
-    "Obtener citas de mañana": { "main": [[{ "node": "Por cada cita", "type": "main", "index": 0 }]] },
-    "Por cada cita": { "main": [[{ "node": "Enviar recordatorio WhatsApp", "type": "main", "index": 0 }]] }
+    "Cron 9AM":                  { "main": [[{ "node": "Obtener citas de mañana",       "type": "main", "index": 0 }]] },
+    "Obtener citas de mañana":   { "main": [[{ "node": "Por cada cita",                  "type": "main", "index": 0 }]] },
+    "Por cada cita":             { "main": [[{ "node": "Enviar recordatorio WhatsApp",   "type": "main", "index": 0 }]] }
   }
 }

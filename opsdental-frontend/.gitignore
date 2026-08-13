@@ -53,6 +53,8 @@ test-login-rapido.mjs
 test-login-visual.mjs
 test-prod-avanzado.mjs
 test-visual.mjs
+test-acceso-consultorio.mjs
+test-flujo-consultorio.mjs
 
 # cypress artifacts
 cypress/screenshots/
