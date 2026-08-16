@@ -384,7 +384,7 @@ class CitaController extends Controller
         $duracion = $tratamiento->duracion_minutos ?? 30;
         $fecha    = Carbon::parse($data['fecha']);
 
-        $dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        $dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
         $diaSemana = $dias[$fecha->dayOfWeek];
 
         $horarios = Horario::where('consultorio_id', $consultorioId)
