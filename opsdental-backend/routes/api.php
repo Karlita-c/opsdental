@@ -8,12 +8,15 @@ use App\Http\Controllers\Api\DepositoController;
 use App\Http\Controllers\Api\DisponibilidadController;
 use App\Http\Controllers\Api\EstadisticasController;
 use App\Http\Controllers\Api\ExpedienteController;
+use App\Http\Controllers\Api\OdontogramaController;
 use App\Http\Controllers\Api\GoogleCalendarController;
 use App\Http\Controllers\Api\HorarioController;
 use App\Http\Controllers\Api\ListaEsperaController;
 use App\Http\Controllers\Api\MembreciaController;
 use App\Http\Controllers\Api\N8NController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\PoliticaController;
+use App\Http\Controllers\Api\PushController;
 use App\Http\Controllers\Api\TratamientoController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,10 +54,15 @@ Route::middleware('throttle:30,1')->group(function () {
 });
 // Login via enlace de invitación (token de un solo uso)
 Route::get('/acceso/{token}', [AuthController::class, 'loginConToken']);
+// VAPID public key — pública para que el frontend la lea sin estar autenticado
+Route::get('/push/vapid-key', [PushController::class, 'vapidPublicKey']);
 // Planes disponibles (pública para la página de precios)
 Route::get('/membrecia/planes', [MembreciaController::class, 'planes']);
-Route::get('/consultorios',      [ConsultorioController::class, 'index']);
-Route::get('/consultorios/{id}', [ConsultorioController::class, 'show']);
+Route::get('/consultorios',                     [ConsultorioController::class, 'index']);
+Route::get('/consultorios/{id}',                [ConsultorioController::class, 'show']);
+Route::get('/consultorios/{id}/politica',       fn($id) => response()->json(
+    \App\Models\Consultorio::findOrFail($id)->getPolitica()
+));
 Route::get('/disponibilidad',      [DisponibilidadController::class, 'index']);
 Route::get('/disponibilidad/dias', [DisponibilidadController::class, 'dias']);
 
@@ -64,18 +72,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me',       [AuthController::class, 'me']);
     Route::patch('/perfil', [AuthController::class, 'actualizarPerfil']);
 
+    // Push notifications
+    Route::post('/push/subscribe',   [PushController::class, 'subscribe']);
+    Route::post('/push/unsubscribe', [PushController::class, 'unsubscribe']);
+
     // Paciente
     Route::middleware('role:paciente')->group(function () {
         Route::get('/paciente/mi-consultorio',    [ConsultorioController::class, 'miConsultorio']);
         Route::get('/citas',                      [CitaController::class, 'index']);
         Route::post('/citas',                     [CitaController::class, 'store']);
         Route::get('/citas/{id}',                 [CitaController::class, 'show']);
+        Route::get('/citas/{id}/penalizacion',    [CitaController::class, 'consultarPenalizacion']);
         Route::patch('/citas/{id}/cancelar',      [CitaController::class, 'cancelar']);
         Route::patch('/citas/{id}/reagendar',     [CitaController::class, 'reagendar']);
         Route::post('/citas/{id}/calificar',      [CitaController::class, 'calificar']);
 
         // Depósito anti no-show
-        Route::post('/citas/{id}/deposito',       [DepositoController::class, 'iniciarPago']);
+        Route::post('/citas/{id}/deposito',          [DepositoController::class, 'iniciarPago']);
+        Route::post('/citas/{id}/deposito/simular',  [DepositoController::class, 'simularPago']);
 
         // Lista de espera
         Route::post('/lista-espera',              [ListaEsperaController::class, 'unirse']);
@@ -86,7 +100,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Consultorio
     Route::middleware('role:consultorio')->group(function () {
         Route::get('/consultorio/agenda',                    [CitaController::class, 'index']);
+        Route::get('/consultorio/slots',                     [CitaController::class, 'slotsDisponibles']);
+        Route::post('/consultorio/citas',                    [CitaController::class, 'crearPorConsultorio']);
+        Route::get('/consultorio/mis-pacientes',             [CitaController::class, 'misPacientes']);
         Route::patch('/consultorio/perfil',                  [ConsultorioController::class, 'update']);
+        Route::get('/consultorio/politica-cancelacion',      [PoliticaController::class, 'show']);
+        Route::put('/consultorio/politica-cancelacion',      [PoliticaController::class, 'update']);
         Route::post('/consultorio/logo',                    [ConsultorioController::class, 'uploadLogo']);
         Route::patch('/consultorio/citas/{id}/estado',       [CitaController::class, 'actualizarEstado']);
         Route::patch('/consultorio/citas/{id}/cancelar',    [CitaController::class, 'cancelarPorConsultorio']);
@@ -122,6 +141,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/consultorio/pacientes/{pacienteId}/expediente',       [ExpedienteController::class, 'store']);
         Route::get('/consultorio/pacientes/{pacienteId}/expediente/{id}',   [ExpedienteController::class, 'show']);
         Route::patch('/consultorio/pacientes/{pacienteId}/expediente/{id}', [ExpedienteController::class, 'update']);
+
+        // Odontograma del paciente
+        Route::get('/consultorio/pacientes/{pacienteId}/odontograma', [OdontogramaController::class, 'show']);
+        Route::put('/consultorio/pacientes/{pacienteId}/odontograma', [OdontogramaController::class, 'update']);
 
         // Google Calendar sync
         Route::get('/google/conectar',      [GoogleCalendarController::class, 'redirigir']);
